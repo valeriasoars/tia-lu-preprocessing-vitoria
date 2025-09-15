@@ -50,14 +50,10 @@ class Statistics:
     
     def _deviation(self, column):
 
-        deviation_list = []
-        mean = self.mean(column)
+        mean_value = self.mean(column)
         data = self.dataset[column]
 
-        for value in data:
-           deviation_list.append(value - mean)
-
-        return deviation_list
+        return [value - mean_value for value in data]
 
     def mean(self, column):
         """
@@ -82,8 +78,7 @@ class Statistics:
         if data == []:
             return 0.0
         
-        mean = sum(data) / len(data)
-        return mean
+        return sum(data) / len(data)
 
     def median(self, column):
         """
@@ -133,7 +128,7 @@ class Statistics:
         self._validate_column(column)
         data = self.dataset[column]
 
-        if data == []:
+        if len(data) == 0:
             return []
         
         mode = []
@@ -163,21 +158,8 @@ class Statistics:
         float
             O desvio padrão dos valores na coluna.
         """
-        self._validate_numeric_column(column)
-        data = self.dataset[column]
-
-        deviations = self._deviation(column)
-        total_sum = 0.0
-
-        if data == []: return 0.0
-
-        for deviation in deviations:
-            total_sum += deviation ** 2
         
-        variance = total_sum/ len(data)
-        stdev = variance ** 0.5
-        
-        return stdev
+        return self.variance(column) ** 0.5
 
     def variance(self, column):
         """
@@ -205,8 +187,8 @@ class Statistics:
         mean_value = self.mean(column)
         
         squared_diffs = [(x - mean_value) ** 2 for x in data]
-        variance = sum(squared_diffs) / len(data)
-        return variance
+        return sum(squared_diffs) / len(data)
+        
 
     def covariance(self, column_a, column_b):
         """
@@ -242,11 +224,10 @@ class Statistics:
         deviation_b = self._deviation(column_b)
         
         for i in range(len(data_a)):
-            correspondentDeviation = deviation_a[i] * deviation_b[i]
-            deviationList.append(correspondentDeviation)
+            correspondent_deviation = deviation_a[i] * deviation_b[i]
+            deviationList.append(correspondent_deviation)
         
-        covariance = sum(deviationList) / len(data_a)
-        return covariance
+        return sum(deviationList) / len(data_a)
 
 
     def itemset(self, column):
@@ -265,8 +246,8 @@ class Statistics:
         """
         self._validate_column(column)
         data = self.dataset[column]
-        itemset = set(data)
-        return itemset
+         
+        return set(data)
 
     def absolute_frequency(self, column):
         """
@@ -314,22 +295,12 @@ class Statistics:
             Um dicionário onde as chaves são os itens e os valores são
             suas proporções (frequência relativa).
         """
-        self._validate_column(column)
-        data = self.dataset[column]
-
-        if data == []:
-            return {}
-            
+    
         absolute_frequencies = self.absolute_frequency(column)
-        relative_frequency = {}
-
-        
+   
         total_frequencies = sum(absolute_frequencies.values())
 
-        for value in absolute_frequencies:
-            relative_frequency[value] = absolute_frequencies[value] / total_frequencies
-
-        return relative_frequency 
+        return {value: absolute_frequencies[value] / total_frequencies for value in absolute_frequencies}
 
     def cumulative_frequency(self, column, frequency_method='absolute'):
         """
@@ -351,26 +322,23 @@ class Statistics:
             Um dicionário ordenado com os itens como chaves e suas
             frequências acumuladas como valores.
         """
-        absolute_frequency = self.absolute_frequency(column)
-        absolute_cumulate_frequency = {}
-        relative_cumulate_frequency = {}
-        acumulator = 0
-
-        self._validate_column(column)
         data = self.dataset[column]
+        absolute_frequency = self.absolute_frequency(column)
+        acumulator = 0
+        cumulative_frequency = {}
 
-
+        
+            
         for value in sorted(absolute_frequency.keys()):
             acumulator += absolute_frequency[value]
-            absolute_cumulate_frequency[value] = acumulator 
-            relative_cumulate_frequency[value] = acumulator / len(data)
-        
-        if frequency_method == "absolute":
-            return absolute_cumulate_frequency
-        elif frequency_method == "relative":
-            return relative_cumulate_frequency
-        else:
-            raise ValueError("O 'frequency_method' deve ser 'absolute' ou 'relative'.")
+            if frequency_method == "absolute":
+                cumulative_frequency[value] = acumulator
+            elif frequency_method == "relative":
+                cumulative_frequency[value] = acumulator / len(data)
+            else:
+                raise ValueError("O 'frequency_method' deve ser 'absolute' ou 'relative'.")
+                
+        return cumulative_frequency
 
     def conditional_probability(self, column, value1, value2):
         """
@@ -411,5 +379,4 @@ class Statistics:
             if data[i] == value2 and data[i + 1] == value1:
                 sequence_count += 1
 
-        conditional_probability = sequence_count / count_value2
-        return conditional_probability
+        return sequence_count / count_value2

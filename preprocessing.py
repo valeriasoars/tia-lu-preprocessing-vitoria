@@ -20,11 +20,20 @@ class MissingValueProcessor:
         Args:
             columns (Set[str]): Um conjunto de nomes de colunas a serem verificadas.
                                Se vazio, todas as colunas são consideradas.
-
         Returns:
             Dict[str, List[Any]]: Um dicionário representando as linhas com valores nulos.
         """
-        pass
+        data = self.dataset
+        targetColumns = self._get_target_columns(columns)
+        lines_length = len(data[targetColumns[0]])
+        emptyValueData = {col: [] for col in targetColumns}
+        
+        for value in range(lines_length):
+            if any(data[col][value] is None for col in targetColumns):
+                for col in targetColumns:
+                    emptyValueData[col].append(data[col][value])
+
+        return emptyValueData
 
     def notna(self, columns: Set[str] = None) -> Dict[str, List[Any]]:
         """
