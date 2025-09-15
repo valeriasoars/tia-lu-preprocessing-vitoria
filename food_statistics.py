@@ -18,7 +18,46 @@ class Statistics:
             O conjunto de dados, onde as chaves representam os nomes das
             colunas e os valores são as listas de dados correspondentes.
         """
+        
+        if not isinstance(dataset, dict):
+            raise TypeError("O dataset deve ser um dicionário.")
+        
+        for value in dataset.values():
+            if not isinstance(value, list):
+               raise TypeError("Todos os valores no dicionário do dataset devem ser listas.") 
+        
+        if dataset:
+            sizes = [len(value) for value in dataset.values()]
+            if not all(size == sizes[0] for size in sizes):
+                raise ValueError("Todas as colunas no dataset devem ter o mesmo tamanho.")
+            
         self.dataset = dataset
+
+    def _validate_column(self, column):
+        if column not in self.dataset: 
+            raise KeyError(f"A coluna '{column}' não existe no dataset")
+    
+    def _validate_numeric_column(self, column):
+        self._validate_column(column)
+        data = self.dataset[column]
+
+        if data == []:
+            return
+        
+        for value in data: 
+            if not isinstance(value, (int, float)):
+                raise TypeError(f"A coluna '{column}' deve ter apenas valores numéricos")
+    
+    def _deviation(self, column):
+
+        deviation_list = []
+        mean = self.mean(column)
+        data = self.dataset[column]
+
+        for value in data:
+           deviation_list.append(value - mean)
+
+        return deviation_list
 
     def mean(self, column):
         """
@@ -37,7 +76,14 @@ class Statistics:
         float
             A média dos valores na coluna.
         """
-        pass
+        self._validate_numeric_column(column)
+        data = self.dataset[column]
+
+        if data == []:
+            return 0.0
+        
+        mean = sum(data) / len(data)
+        return mean
 
     def median(self, column):
         """
@@ -55,7 +101,18 @@ class Statistics:
         float
             O valor da mediana da coluna.
         """
-        pass
+        self._validate_numeric_column(column)
+        data = self.dataset[column]
+        sorted_data = sorted(data)
+
+        size = len(sorted_data)
+
+        if size < 1: return 0.0
+
+        if size%2 == 0:
+            return (sorted_data[size//2 - 1] + sorted_data[size//2]) / 2
+        
+        return sorted_data[size//2]
 
     def mode(self, column):
         """
@@ -73,7 +130,21 @@ class Statistics:
         list
             Uma lista contendo o(s) valor(es) da moda.
         """
-        pass
+        self._validate_column(column)
+        data = self.dataset[column]
+
+        if data == []:
+            return []
+        
+        mode = []
+        frequencies = self.absolute_frequency(column)
+        maxFrequency = max(frequencies.values())
+        
+        for item, frequency in frequencies.items():
+            if frequency == maxFrequency: 
+                mode.append(item)
+
+        return mode
 
     def stdev(self, column):
         """
@@ -92,7 +163,21 @@ class Statistics:
         float
             O desvio padrão dos valores na coluna.
         """
-        pass
+        self._validate_numeric_column(column)
+        data = self.dataset[column]
+
+        deviations = self._deviation(column)
+        total_sum = 0.0
+
+        if data == []: return 0.0
+
+        for deviation in deviations:
+            total_sum += deviation ** 2
+        
+        variance = total_sum/ len(data)
+        stdev = variance ** 0.5
+        
+        return stdev
 
     def variance(self, column):
         """
@@ -111,7 +196,17 @@ class Statistics:
         float
             A variância dos valores na coluna.
         """
-        pass
+        self._validate_numeric_column(column)
+        data = self.dataset[column]
+
+        if data == []:
+            return 0.0
+        
+        mean_value = self.mean(column)
+        
+        squared_diffs = [(x - mean_value) ** 2 for x in data]
+        variance = sum(squared_diffs) / len(data)
+        return variance
 
     def covariance(self, column_a, column_b):
         """
@@ -132,7 +227,27 @@ class Statistics:
         float
             O valor da covariância entre as duas colunas.
         """
-        pass
+        deviationList = []
+
+        self._validate_numeric_column(column_a)
+        data_a = self.dataset[column_a]
+
+        self._validate_numeric_column(column_b)
+        data_b = self.dataset[column_b]
+
+        if data_a == [] or data_b == []:
+            return 0.0
+        
+        deviation_a = self._deviation(column_a)
+        deviation_b = self._deviation(column_b)
+        
+        for i in range(len(data_a)):
+            correspondentDeviation = deviation_a[i] * deviation_b[i]
+            deviationList.append(correspondentDeviation)
+        
+        covariance = sum(deviationList) / len(data_a)
+        return covariance
+
 
     def itemset(self, column):
         """
@@ -148,7 +263,10 @@ class Statistics:
         set
             Um conjunto com os valores únicos da coluna.
         """
-        pass
+        self._validate_column(column)
+        data = self.dataset[column]
+        itemset = set(data)
+        return itemset
 
     def absolute_frequency(self, column):
         """
@@ -165,7 +283,21 @@ class Statistics:
             Um dicionário onde as chaves são os itens e os valores são
             suas contagens (frequência absoluta).
         """
-        pass
+        self._validate_column(column)
+        data = self.dataset[column]
+
+        if data == []:
+            return {}
+        
+        absolute_frequency = {}
+
+        for value in data:
+            if value not in absolute_frequency: 
+                absolute_frequency[value] = 0
+
+            absolute_frequency[value] += 1
+
+        return absolute_frequency
 
     def relative_frequency(self, column):
         """
@@ -182,7 +314,22 @@ class Statistics:
             Um dicionário onde as chaves são os itens e os valores são
             suas proporções (frequência relativa).
         """
-        pass
+        self._validate_column(column)
+        data = self.dataset[column]
+
+        if data == []:
+            return {}
+            
+        absolute_frequencies = self.absolute_frequency(column)
+        relative_frequency = {}
+
+        
+        total_frequencies = sum(absolute_frequencies.values())
+
+        for value in absolute_frequencies:
+            relative_frequency[value] = absolute_frequencies[value] / total_frequencies
+
+        return relative_frequency 
 
     def cumulative_frequency(self, column, frequency_method='absolute'):
         """
@@ -204,7 +351,26 @@ class Statistics:
             Um dicionário ordenado com os itens como chaves e suas
             frequências acumuladas como valores.
         """
-        pass
+        absolute_frequency = self.absolute_frequency(column)
+        absolute_cumulate_frequency = {}
+        relative_cumulate_frequency = {}
+        acumulator = 0
+
+        self._validate_column(column)
+        data = self.dataset[column]
+
+
+        for value in sorted(absolute_frequency.keys()):
+            acumulator += absolute_frequency[value]
+            absolute_cumulate_frequency[value] = acumulator 
+            relative_cumulate_frequency[value] = acumulator / len(data)
+        
+        if frequency_method == "absolute":
+            return absolute_cumulate_frequency
+        elif frequency_method == "relative":
+            return relative_cumulate_frequency
+        else:
+            raise ValueError("O 'frequency_method' deve ser 'absolute' ou 'relative'.")
 
     def conditional_probability(self, column, value1, value2):
         """
@@ -229,4 +395,21 @@ class Statistics:
         float
             A probabilidade condicional, um valor entre 0 e 1.
         """
-        pass
+        self._validate_column(column)
+        data = self.dataset[column]
+
+        if len(data) < 2:
+            return 0.0
+        
+        count_value2 = data.count(value2)
+
+        if count_value2 == 0:
+            return 0.0 
+        
+        sequence_count = 0
+        for i in range(len(data) - 1):
+            if data[i] == value2 and data[i + 1] == value1:
+                sequence_count += 1
+
+        conditional_probability = sequence_count / count_value2
+        return conditional_probability
