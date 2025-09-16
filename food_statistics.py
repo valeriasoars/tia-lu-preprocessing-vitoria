@@ -41,12 +41,11 @@ class Statistics:
         self._validate_column(column)
         data = self.dataset[column]
 
-        if data == []:
-            return
+        if not data:
+          return
         
-        for value in data: 
-            if value is not None and not isinstance(value, (int, float)):
-                raise TypeError(f"A coluna '{column}' deve ter apenas valores numéricos")
+        if not all(isinstance(value, (int, float)) for value in data):
+            raise TypeError(f"A coluna '{column}' deve ter apenas valores numéricos")
     
     def _deviation(self, column):
 
@@ -133,15 +132,10 @@ class Statistics:
         if len(data) == 0:
             return []
         
-        mode = []
         frequencies = self.absolute_frequency(column)
-        maxFrequency = max(frequencies.values())
+        max_frequency = max(frequencies.values())
         
-        for item, frequency in frequencies.items():
-            if frequency == maxFrequency: 
-                mode.append(item)
-
-        return mode
+        return [item for item, freq in frequencies.items() if freq == max_frequency]
 
     def stdev(self, column):
         """
@@ -191,7 +185,6 @@ class Statistics:
         squared_diffs = [(x - mean_value) ** 2 for x in data]
         return sum(squared_diffs) / len(data)
         
-
     def covariance(self, column_a, column_b):
         """
         Calcula a covariância entre duas colunas.
@@ -230,7 +223,6 @@ class Statistics:
             deviationList.append(correspondent_deviation)
         
         return sum(deviationList) / len(data_a)
-
 
     def itemset(self, column):
         """
@@ -329,8 +321,6 @@ class Statistics:
         acumulator = 0
         cumulative_frequency = {}
 
-        
-            
         for value in sorted(absolute_frequency.keys()):
             acumulator += absolute_frequency[value]
             if frequency_method == "absolute":
