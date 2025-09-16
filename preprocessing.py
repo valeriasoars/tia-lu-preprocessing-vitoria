@@ -7,6 +7,19 @@ class MissingValueProcessor:
     """
     def __init__(self, dataset: Dict[str, List[Any]]):
         self.dataset = dataset
+        self.stats = Statistics(dataset)
+
+        if not isinstance(dataset, dict):
+            raise TypeError("O dataset deve ser um dicionário.")
+        
+        for value in dataset.values():
+            if not isinstance(value, list):
+               raise TypeError("Todos os valores no dicionário do dataset devem ser listas.") 
+        
+        if dataset:
+            sizes = [len(value) for value in dataset.values()]
+            if not all(size == sizes[0] for size in sizes):
+                raise ValueError("Todas as colunas no dataset devem ter o mesmo tamanho.")
 
     def _get_target_columns(self, columns: Set[str]) -> List[str]:
         """Retorna as colunas a serem processadas. Se 'columns' for vazio, retorna todas as colunas."""
@@ -28,10 +41,10 @@ class MissingValueProcessor:
         lines_length = len(data[targetColumns[0]])
         emptyValueData = {col: [] for col in targetColumns}
         
-        for value in range(lines_length):
-            if any(data[col][value] is None for col in targetColumns):
+        for idx_line in range(lines_length):
+            if any(data[col][idx_line] is None for col in targetColumns):
                 for col in targetColumns:
-                    emptyValueData[col].append(data[col][value])
+                    emptyValueData[col].append(data[col][idx_line])
 
         return emptyValueData
 
@@ -47,7 +60,17 @@ class MissingValueProcessor:
         Returns:
             Dict[str, List[Any]]: Um dicionário representando as linhas sem valores nulos.
         """
-        pass
+        data = self.dataset
+        targetColumns = self._get_target_columns(columns)
+        lines_length = len(data[targetColumns[0]])
+        notEmptyValueData = {col: [] for col in targetColumns}
+        
+        for idx_line in range(lines_length):
+            if all(data[col][idx_line] is not None for col in targetColumns):
+                for col in targetColumns:
+                    notEmptyValueData[col].append(data[col][idx_line])
+
+        return notEmptyValueData
 
     def fillna(self, columns: Set[str] = None, method: str = 'mean', default_value: Any = 0):
         """
@@ -59,7 +82,20 @@ class MissingValueProcessor:
             method (str): 'mean', 'median', 'mode', ou 'default_value'.
             default_value (Any): Valor para usar com o método 'default_value'.
         """
-        pass
+        data = self.dataset
+        targetColumns = self._get_target_columns(columns)
+
+        lines_length = len(data[targetColumns[0]])
+        
+        for idx_line in range(lines_length):
+            if any(data[col][idx_line] is None for col in targetColumns):
+                for col in targetColumns:
+                    if method == 'mean':
+                        data[col][idx_line] = self.stats.mean(col)
+                    elif method == 'median':
+                        data[col][idx_line] = self.stats.median(col)
+                    elif method == 'mode':
+                        data[col][idx_line] = self.stats.mode(col)[0]
 
     def dropna(self, columns: Set[str] = None):
         """
@@ -69,8 +105,18 @@ class MissingValueProcessor:
         Args:
             columns (Set[str]): Colunas a serem verificadas para valores nulos. Se vazio, todas as colunas são verificadas.
         """
-        pass
-
+        data = self.dataset
+        targetColumns = self._get_target_columns(columns)
+        lines_length = len(data[targetColumns[0]])
+        del_index = []
+        
+        for idx_line in range(lines_length):
+            if any(data[col][idx_line] is None for col in targetColumns):
+                del_index.append(idx_line)
+                
+        for idx in del_index:
+            for col in data:
+                del data[col][idx]
 
 class Scaler:
     """

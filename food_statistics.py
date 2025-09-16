@@ -45,7 +45,7 @@ class Statistics:
             return
         
         for value in data: 
-            if not isinstance(value, (int, float)):
+            if value is not None and not isinstance(value, (int, float)):
                 raise TypeError(f"A coluna '{column}' deve ter apenas valores numéricos")
     
     def _deviation(self, column):
@@ -78,7 +78,9 @@ class Statistics:
         if data == []:
             return 0.0
         
-        return sum(data) / len(data)
+        valid_data = [value for value in data if value is not None]
+        
+        return sum(valid_data) / len(valid_data)
 
     def median(self, column):
         """

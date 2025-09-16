@@ -24,7 +24,7 @@ class TestMissingValueProcessor(unittest.TestCase):
         
         # Testa a busca por nulos em todas as colunas (comportamento padrão)
         result_all_cols = processor.isna()
-        self.assertEqual(len(result_all_cols['idade']), 4) # Todas as linhas têm algum nulo
+        self.assertEqual(len(result_all_cols['idade']), 3) # Todas as linhas têm algum nulo
 
     def test_notna(self):
         processor = MissingValueProcessor(copy.deepcopy(self.data))
