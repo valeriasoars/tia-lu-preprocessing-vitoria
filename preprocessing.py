@@ -124,6 +124,7 @@ class Scaler:
     """
     def __init__(self, dataset: Dict[str, List[Any]]):
         self.dataset = dataset
+        self.stats = Statistics(dataset)
 
     def _get_target_columns(self, columns: Set[str]) -> List[str]:
         return list(columns) if columns else list(self.dataset.keys())
@@ -136,7 +137,19 @@ class Scaler:
         Args:
             columns (Set[str]): Colunas para aplicar o scaler. Se vazio, tenta aplicar a todas.
         """
-        pass
+        targetColumns = self._get_target_columns(columns)
+        for col in targetColumns:
+            data = self.dataset[col]
+ 
+            valid_values = [x for x in data if x is not None]
+            if valid_values:
+                min_value = min(valid_values)
+                max_value = max(valid_values)
+                
+                if max_value == min_value:
+                    self.dataset[col] = [0.0 if x is not None else None for x in data]
+                else:
+                    self.dataset[col] = [(x - min_value) / (max_value - min_value) if x is not None else None for x in data]
 
     def standard_scaler(self, columns: Set[str] = None):
         """
@@ -146,8 +159,19 @@ class Scaler:
         Args:
             columns (Set[str]): Colunas para aplicar o scaler. Se vazio, tenta aplicar a todas.
         """
-        pass
-
+        targetColumns = self._get_target_columns(columns)
+        for col in targetColumns:
+            data = self.dataset[col]
+            
+            if data: 
+                mean_val = self.stats.mean(col)
+                std_val = self.stats.stdev(col)
+                
+            self.dataset[col] = [
+                0.0 if x is not None and std_val == 0 else
+                (x - mean_val) / std_val if x is not None else None
+                for x in data
+            ]
 class Encoder:
     """
     Aplica codificação em colunas categóricas.
@@ -174,7 +198,6 @@ class Encoder:
             columns (Set[str]): Colunas categóricas para codificar.
         """
         pass
-
 
 class Preprocessing:
     """

@@ -41,11 +41,9 @@ class Statistics:
         self._validate_column(column)
         data = self.dataset[column]
 
-        if not data:
-          return
-        
-        if not all(isinstance(value, (int, float)) for value in data):
-            raise TypeError(f"A coluna '{column}' deve ter apenas valores numéricos")
+        for value in data:
+                if value is not None and not isinstance(value, (int, float)):
+                    raise TypeError(f"A coluna '{column}' deve ter apenas valores numéricos")
     
     def _deviation(self, column):
 
