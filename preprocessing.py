@@ -187,7 +187,18 @@ class Encoder:
         Args:
             columns (Set[str]): Colunas categóricas para codificar.
         """
-        pass
+
+        for col in columns:
+            ord_list = list(dict.fromkeys(self.dataset[col]))
+            ord_list.sort()
+
+            list_map = {item: i for i, item in enumerate(ord_list)}
+            mirror = [list_map[c] for c in self.dataset[col]]
+            
+            self.dataset[col] = mirror
+
+
+        
 
     def oneHot_encode(self, columns: Set[str]):
         """
@@ -197,7 +208,15 @@ class Encoder:
         Args:
             columns (Set[str]): Colunas categóricas para codificar.
         """
-        pass
+        for col in columns:
+            ord_list = list(dict.fromkeys(self.dataset[col]))
+            ord_list.sort()
+
+            for cat in ord_list:
+                new_col = f"{col}_{cat}"
+                self.dataset[new_col] = [1 if value == cat else 0 for value in self.dataset[col]]
+
+            del self.dataset[col]
 
 class Preprocessing:
     """
