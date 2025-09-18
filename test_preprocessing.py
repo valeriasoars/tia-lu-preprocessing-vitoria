@@ -108,10 +108,10 @@ class TestPreprocessingFacade(unittest.TestCase):
             Preprocessing(invalid_data)
 
     # Patch indica o local ONDE o objeto é usado, não onde ele é definido.
-    @patch('preprocessing_lib.MissingValueProcessor')
-    @patch('preprocessing_lib.Scaler')
-    @patch('preprocessing_lib.Encoder')
-    @patch('preprocessing_lib.Statistics')
+    @patch('preprocessing.MissingValueProcessor')
+    @patch('preprocessing.Scaler')
+    @patch('preprocessing.Encoder')
+    @patch('preprocessing.Statistics')
     def test_facade_methods_call_correct_implementations(self, MockStats, MockEncoder, MockScaler, MockMVP):
         """
         Testa se os métodos de fachada da classe Preprocessing chamam

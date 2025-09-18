@@ -243,20 +243,20 @@ class Preprocessing:
         """
         Atalho para missing_values.isna(). Retorna as linhas com valores nulos.
         """
-        return self.missing_values.isna(columns)
+        return self.missing_values.isna(columns=columns)
 
     def notna(self, columns: Set[str] = None) -> Dict[str, List[Any]]:
         """
         Atalho para missing_values.notna(). Retorna as linhas sem valores nulos.
         """
-        return self.missing_values.notna(columns)
+        return self.missing_values.notna(columns=columns)
 
     def fillna(self, columns: Set[str] = None, method: str = 'mean', default_value: Any = 0):
         """
         Atalho para missing_values.fillna(). Preenche valores nulos.
         Retorna 'self' para permitir encadeamento de métodos.
         """
-        self.missing_values.fillna(columns, method, default_value)
+        self.missing_values.fillna(columns=columns, method=method, default_value=default_value)
         return self
 
     def dropna(self, columns: Set[str] = None):
@@ -264,7 +264,7 @@ class Preprocessing:
         Atalho para missing_values.dropna(). Remove linhas com valores nulos.
         Retorna 'self' para permitir encadeamento de métodos.
         """
-        self.missing_values.dropna(columns)
+        self.missing_values.dropna(columns=columns)
         return self
 
     def scale(self, columns: Set[str] = None, method: str = 'minMax'):
@@ -278,9 +278,9 @@ class Preprocessing:
         Retorna 'self' para permitir encadeamento de métodos.
         """
         if method == 'minMax':
-            self.scaler.minMax_scaler(columns)
+            self.scaler.minMax_scaler(columns=columns)
         elif method == 'standard':
-            self.scaler.standard_scaler(columns)
+            self.scaler.standard_scaler(columns=columns)
         else:
             raise ValueError(f"Método de escalonamento '{method}' não suportado. Use 'minMax' ou 'standard'.")
         return self
@@ -300,9 +300,9 @@ class Preprocessing:
             return self
 
         if method == 'label':
-            self.encoder.label_encode(columns)
+            self.encoder.label_encode(columns=columns)
         elif method == 'oneHot':
-            self.encoder.oneHot_encode(columns)
+            self.encoder.oneHot_encode(columns=columns)
         else:
             raise ValueError(f"Método de codificação '{method}' não suportado. Use 'label' ou 'oneHot'.")
         return self
