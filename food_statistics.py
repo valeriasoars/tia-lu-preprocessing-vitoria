@@ -34,19 +34,20 @@ class Statistics:
         self.dataset = dataset
 
     def _validate_column(self, column):
+        """Valida se a coluna existe no dataset."""
         if column not in self.dataset: 
             raise KeyError(f"A coluna '{column}' não existe no dataset")
     
     def _validate_numeric_column(self, column):
+        """Valida se a coluna existe e contém apenas dados numéricos."""
         self._validate_column(column)
         data = self.dataset[column]
 
-        for value in data:
-                if value is not None and not isinstance(value, (int, float)):
-                    raise TypeError(f"A coluna '{column}' deve ter apenas valores numéricos")
+        if not all(value is None or isinstance(value, (int, float)) for value in data):
+            raise TypeError(f"A coluna '{column}' deve ter apenas valores numéricos")
     
     def _deviation(self, column):
-
+        """Calcula os desvios da média para uma coluna."""
         mean_value = self.mean(column)
         data = self.dataset[column]
 
@@ -97,14 +98,15 @@ class Statistics:
         """
         self._validate_numeric_column(column)
         data = self.dataset[column]
-        sorted_data = sorted(data)
 
+        if len(data) == 0:
+            return 0.0
+
+        sorted_data = sorted(data)
         size = len(sorted_data)
 
-        if size < 1: return 0.0
-
-        if size%2 == 0:
-            return (sorted_data[size//2 - 1] + sorted_data[size//2]) / 2
+        if size % 2 == 0:
+            return (sorted_data[size // 2 - 1] + sorted_data[size//2]) / 2
         
         return sorted_data[size//2]
 
@@ -205,9 +207,9 @@ class Statistics:
         deviationList = []
 
         self._validate_numeric_column(column_a)
-        data_a = self.dataset[column_a]
-
         self._validate_numeric_column(column_b)
+
+        data_a = self.dataset[column_a]
         data_b = self.dataset[column_b]
 
         if data_a == [] or data_b == []:
@@ -216,9 +218,8 @@ class Statistics:
         deviation_a = self._deviation(column_a)
         deviation_b = self._deviation(column_b)
         
-        for i in range(len(data_a)):
-            correspondent_deviation = deviation_a[i] * deviation_b[i]
-            deviationList.append(correspondent_deviation)
+        for da, db in zip(deviation_a, deviation_b):
+            deviationList.append(da * db)
         
         return sum(deviationList) / len(data_a)
 
