@@ -9,22 +9,10 @@ class MissingValueProcessor:
         self.dataset = dataset
         self.stats = Statistics(dataset)
 
-        if not isinstance(dataset, dict):
-            raise TypeError("O dataset deve ser um dicionário.")
-        
-        for value in dataset.values():
-            if not isinstance(value, list):
-               raise TypeError("Todos os valores no dicionário do dataset devem ser listas.") 
-        
-        if dataset:
-            sizes = [len(value) for value in dataset.values()]
-            if not all(size == sizes[0] for size in sizes):
-                raise ValueError("Todas as colunas no dataset devem ter o mesmo tamanho.")
-
     def _get_target_columns(self, columns: Set[str]) -> List[str]:
         """Retorna as colunas a serem processadas. Se 'columns' for vazio, retorna todas as colunas."""
         return list(columns) if columns else list(self.dataset.keys())
-
+    
     def isna(self, columns: Set[str] = None) -> Dict[str, List[Any]]:
         """
         Retorna um novo dataset contendo apenas as linhas que possuem
@@ -117,7 +105,6 @@ class MissingValueProcessor:
         for idx in del_index:
             for col in data:
                 del data[col][idx]
-
 class Scaler:
     """
     Aplica transformações de escala em colunas numéricas do dataset.
@@ -217,7 +204,6 @@ class Encoder:
                 self.dataset[new_col] = [1 if value == cat else 0 for value in self.dataset[col]]
 
             del self.dataset[col]
-
 class Preprocessing:
     """
     Classe principal que orquestra as operações de pré-processamento de dados.
@@ -237,7 +223,9 @@ class Preprocessing:
         Valida se todas as listas (colunas) no dicionário do dataset
         têm o mesmo comprimento.
         """
-        pass
+        sizes = [len(col) for col in self.dataset.values()]
+        if not all(size == sizes[0] for size in sizes):
+            raise ValueError("Todas as colunas no dataset devem ter o mesmo tamanho.")
 
     def isna(self, columns: Set[str] = None) -> Dict[str, List[Any]]:
         """
@@ -306,3 +294,11 @@ class Preprocessing:
         else:
             raise ValueError(f"Método de codificação '{method}' não suportado. Use 'label' ou 'oneHot'.")
         return self
+
+
+
+
+
+
+
+
