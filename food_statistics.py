@@ -45,13 +45,6 @@ class Statistics:
 
         if not all(value is None or isinstance(value, (int, float)) for value in data):
             raise TypeError(f"A coluna '{column}' deve ter apenas valores numéricos")
-    
-    def _deviation(self, column):
-        """Calcula os desvios da média para uma coluna."""
-        mean_value = self.mean(column)
-        data = self.dataset[column]
-
-        return [value - mean_value for value in data]
 
     def mean(self, column):
         """
@@ -73,10 +66,10 @@ class Statistics:
         self._validate_numeric_column(column)
         data = self.dataset[column]
 
-        if data == []:
-            return 0.0
-        
         valid_data = [value for value in data if value is not None]
+        
+        if data == [] or valid_data == []:
+            return 0.0
         
         return sum(valid_data) / len(valid_data)
 
@@ -99,10 +92,12 @@ class Statistics:
         self._validate_numeric_column(column)
         data = self.dataset[column]
 
-        if len(data) == 0:
+        valid_data = [value for value in data if value is not None]
+
+        if len(data) == 0 or len(valid_data) == 0:
             return 0.0
 
-        sorted_data = sorted(data)
+        sorted_data = sorted(valid_data)
         size = len(sorted_data)
 
         if size % 2 == 0:
@@ -180,10 +175,12 @@ class Statistics:
         if data == []:
             return 0.0
         
+        valid_data = [value for value in data if value is not None]
+
         mean_value = self.mean(column)
         
-        squared_diffs = [(x - mean_value) ** 2 for x in data]
-        return sum(squared_diffs) / len(data)
+        squared_diffs = [(x - mean_value) ** 2 for x in valid_data]
+        return sum(squared_diffs) / len(valid_data)
         
     def covariance(self, column_a, column_b):
         """
@@ -204,7 +201,6 @@ class Statistics:
         float
             O valor da covariância entre as duas colunas.
         """
-        deviationList = []
 
         self._validate_numeric_column(column_a)
         self._validate_numeric_column(column_b)
@@ -215,13 +211,18 @@ class Statistics:
         if data_a == [] or data_b == []:
             return 0.0
         
-        deviation_a = self._deviation(column_a)
-        deviation_b = self._deviation(column_b)
+        mean_a = self.mean(column_a) 
+        mean_b = self.mean(column_b) 
+
+        deviationProductList = []
         
-        for da, db in zip(deviation_a, deviation_b):
-            deviationList.append(da * db)
+        for deviation_a, deviation_b in zip(data_a, data_b):
+            if deviation_a is not None and deviation_b is not None: 
+                deviationProductList.append((deviation_a - mean_a) * (deviation_b - mean_b))
+
+        if len(deviationProductList) == 0 : return 0.0
         
-        return sum(deviationList) / len(data_a)
+        return sum(deviationProductList) / len(deviationProductList)
 
     def itemset(self, column):
         """

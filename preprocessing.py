@@ -26,7 +26,7 @@ class MissingValueProcessor:
         """
         data = self.dataset
         targetColumns = self._get_target_columns(columns)
-        lines_length = len(data[targetColumns[0]])
+        lines_length = len(data[targetColumns[0]]) #verificar se todas as linhas tem o mesmo tamanho? 
         emptyValueData = {col: [] for col in targetColumns}
         
         for idx_line in range(lines_length):
@@ -49,8 +49,10 @@ class MissingValueProcessor:
             Dict[str, List[Any]]: Um dicionário representando as linhas sem valores nulos.
         """
         data = self.dataset
+
         targetColumns = self._get_target_columns(columns)
         lines_length = len(data[targetColumns[0]])
+
         notEmptyValueData = {col: [] for col in targetColumns}
         
         for idx_line in range(lines_length):
@@ -71,19 +73,29 @@ class MissingValueProcessor:
             default_value (Any): Valor para usar com o método 'default_value'.
         """
         data = self.dataset
-        targetColumns = self._get_target_columns(columns)
 
-        lines_length = len(data[targetColumns[0]])
+        targetColumns = self._get_target_columns(columns)
         
-        for idx_line in range(lines_length):
-            if any(data[col][idx_line] is None for col in targetColumns):
-                for col in targetColumns:
-                    if method == 'mean':
-                        data[col][idx_line] = self.stats.mean(col)
-                    elif method == 'median':
-                        data[col][idx_line] = self.stats.median(col)
-                    elif method == 'mode':
-                        data[col][idx_line] = self.stats.mode(col)[0]
+        for col in targetColumns:
+            fill_value = 0
+            if method == 'mean':
+                    fill_value = self.stats.mean(col)
+            elif method == 'median':
+                    fill_value = self.stats.median(col)
+            elif method == 'mode':
+                if self.stats.mode(col)[0] != []: 
+                    if self.stats.mode(col):
+                        fill_value = self.stats.mode(col)[0]
+                else: fill_value = default_value
+            elif method == 'default_value':
+                fill_value = default_value
+
+            for line, value in enumerate(data[col]):
+                if value is None:
+                    data[col][line] = fill_value
+                
+                    
+                    
 
     def dropna(self, columns: Set[str] = None):
         """
@@ -94,17 +106,21 @@ class MissingValueProcessor:
             columns (Set[str]): Colunas a serem verificadas para valores nulos. Se vazio, todas as colunas são verificadas.
         """
         data = self.dataset
+
         targetColumns = self._get_target_columns(columns)
         lines_length = len(data[targetColumns[0]])
-        del_index = []
+
+        idx_to_delete = []
         
         for idx_line in range(lines_length):
             if any(data[col][idx_line] is None for col in targetColumns):
-                del_index.append(idx_line)
-                
-        for idx in del_index:
+                idx_to_delete.append(idx_line)
+        
+        reversed_idx_del_list = sorted(idx_to_delete, reverse=True)
+
+        for idx in reversed_idx_del_list:
             for col in data:
-                del data[col][idx]
+                del data[col][idx] # remoção direta pelos índices originais? 
 class Scaler:
     """
     Aplica transformações de escala em colunas numéricas do dataset.
@@ -125,6 +141,7 @@ class Scaler:
             columns (Set[str]): Colunas para aplicar o scaler. Se vazio, tenta aplicar a todas.
         """
         targetColumns = self._get_target_columns(columns)
+
         for col in targetColumns:
             data = self.dataset[col]
  
@@ -176,16 +193,13 @@ class Encoder:
         """
 
         for col in columns:
-            ord_list = list(dict.fromkeys(self.dataset[col]))
-            ord_list.sort()
+            unique_categories_sorted = sorted(list(set(self.dataset[col])))
 
-            list_map = {item: i for i, item in enumerate(ord_list)}
-            mirror = [list_map[c] for c in self.dataset[col]]
+            list_map = {item: i for i, item in enumerate(unique_categories_sorted)}
+            encoded_values = [list_map[c] for c in self.dataset[col]]
             
-            self.dataset[col] = mirror
+            self.dataset[col] = encoded_values
 
-
-        
 
     def oneHot_encode(self, columns: Set[str]):
         """
@@ -196,10 +210,10 @@ class Encoder:
             columns (Set[str]): Colunas categóricas para codificar.
         """
         for col in columns:
-            ord_list = list(dict.fromkeys(self.dataset[col]))
-            ord_list.sort()
+            unique_categories_sorted = list(dict.fromkeys(self.dataset[col]))
+            unique_categories_sorted.sort()
 
-            for cat in ord_list:
+            for cat in unique_categories_sorted:
                 new_col = f"{col}_{cat}"
                 self.dataset[new_col] = [1 if value == cat else 0 for value in self.dataset[col]]
 
