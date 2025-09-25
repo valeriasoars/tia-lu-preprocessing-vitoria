@@ -198,7 +198,7 @@ class Encoder:
             unique_categories_sorted = sorted(set(values))
 
             list_map = {item: i for i, item in enumerate(unique_categories_sorted)}
-            encoded_values = [list_map[c] for c in self.dataset[col]]
+            encoded_values = [list_map[value] for value in values]
             
             self.dataset[col] = encoded_values
 
@@ -217,7 +217,7 @@ class Encoder:
 
             for cat in unique_categories_sorted:
                 new_col = f"{col}_{cat}"
-                self.dataset[new_col] = [1 if value == cat else 0 for value in self.dataset[col]]
+                self.dataset[new_col] = [1 if value == cat else 0 for value in values]
 
             del self.dataset[col]
 class Preprocessing:
