@@ -172,11 +172,11 @@ class Statistics:
         self._validate_numeric_column(column)
         data = self.dataset[column]
 
-        if data == []:
-            return 0.0
-        
         valid_data = [value for value in data if value is not None]
 
+        if data == [] or not valid_data:
+            return 0.0
+        
         mean_value = self.mean(column)
         
         squared_diffs = [(x - mean_value) ** 2 for x in valid_data]
@@ -214,15 +214,15 @@ class Statistics:
         mean_a = self.mean(column_a) 
         mean_b = self.mean(column_b) 
 
-        deviationProductList = []
+        deviation_products = []
         
         for deviation_a, deviation_b in zip(data_a, data_b):
             if deviation_a is not None and deviation_b is not None: 
-                deviationProductList.append((deviation_a - mean_a) * (deviation_b - mean_b))
+                deviation_products.append((deviation_a - mean_a) * (deviation_b - mean_b))
 
-        if len(deviationProductList) == 0 : return 0.0
+        if len(deviation_products) == 0 : return 0.0
         
-        return sum(deviationProductList) / len(deviationProductList)
+        return sum(deviation_products) / len(deviation_products)
 
     def itemset(self, column):
         """
@@ -239,9 +239,8 @@ class Statistics:
             Um conjunto com os valores únicos da coluna.
         """
         self._validate_column(column)
-        data = self.dataset[column]
          
-        return set(data)
+        return set(self.dataset[column])
 
     def absolute_frequency(self, column):
         """
@@ -289,7 +288,8 @@ class Statistics:
             Um dicionário onde as chaves são os itens e os valores são
             suas proporções (frequência relativa).
         """
-    
+
+        self._validate_column(column)
         absolute_frequencies = self.absolute_frequency(column)
    
         total_frequencies = sum(absolute_frequencies.values())
@@ -316,7 +316,9 @@ class Statistics:
             Um dicionário ordenado com os itens como chaves e suas
             frequências acumuladas como valores.
         """
+        self._validate_column(column)
         data = self.dataset[column]
+        
         absolute_frequency = self.absolute_frequency(column)
         acumulator = 0
         cumulative_frequency = {}
