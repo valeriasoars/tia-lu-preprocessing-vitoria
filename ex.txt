@@ -1,7 +1,0 @@
-para cada linha no dataset:
-    se algum valor na linha for ausente:
-        adicionar linha à lista de linhas para remover
-
-para cada linha na lista de remoção:
-    remover linha do dataset
-

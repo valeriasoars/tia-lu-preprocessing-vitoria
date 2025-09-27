@@ -25,16 +25,16 @@ class MissingValueProcessor:
             Dict[str, List[Any]]: Um dicionário representando as linhas com valores nulos.
         """
         data = self.dataset
-        targetColumns = self._get_target_columns(columns)
-        lines_length = len(data[targetColumns[0]]) #verificar se todas as linhas tem o mesmo tamanho? 
-        emptyValueData = {col: [] for col in targetColumns}
+        target_columns = self._get_target_columns(columns)
+        lines_length = len(data[target_columns[0]]) #verificar se todas as linhas tem o mesmo tamanho? 
+        empty_value_data = {col: [] for col in target_columns}
         
         for idx_line in range(lines_length):
-            if any(data[col][idx_line] is None for col in targetColumns):
-                for col in targetColumns:
-                    emptyValueData[col].append(data[col][idx_line])
+            if any(data[col][idx_line] is None for col in target_columns):
+                for col in target_columns:
+                    empty_value_data[col].append(data[col][idx_line])
 
-        return emptyValueData
+        return empty_value_data
 
     def notna(self, columns: Set[str] = None) -> Dict[str, List[Any]]:
         """
@@ -50,17 +50,17 @@ class MissingValueProcessor:
         """
         data = self.dataset
 
-        targetColumns = self._get_target_columns(columns)
-        lines_length = len(data[targetColumns[0]])
+        target_columns = self._get_target_columns(columns)
+        lines_length = len(data[target_columns[0]])
 
-        notEmptyValueData = {col: [] for col in targetColumns}
+        not_empty_value_data = {col: [] for col in target_columns}
         
         for idx_line in range(lines_length):
-            if all(data[col][idx_line] is not None for col in targetColumns):
-                for col in targetColumns:
-                    notEmptyValueData[col].append(data[col][idx_line])
+            if all(data[col][idx_line] is not None for col in target_columns):
+                for col in target_columns:
+                    not_empty_value_data[col].append(data[col][idx_line])
 
-        return notEmptyValueData
+        return not_empty_value_data
 
     def fillna(self, columns: Set[str] = None, method: str = 'mean', default_value: Any = 0):
         """
@@ -74,18 +74,17 @@ class MissingValueProcessor:
         """
         data = self.dataset
 
-        targetColumns = self._get_target_columns(columns)
+        target_columns = self._get_target_columns(columns)
         
-        for col in targetColumns:
+        for col in target_columns:
             fill_value = 0
             if method == 'mean':
                     fill_value = self.stats.mean(col)
             elif method == 'median':
                     fill_value = self.stats.median(col)
             elif method == 'mode':
-                if self.stats.mode(col)[0] != []: 
-                    if self.stats.mode(col):
-                        fill_value = self.stats.mode(col)[0]
+                if self.stats.mode(col):
+                    fill_value = self.stats.mode(col)[0]
                 else: fill_value = default_value
             elif method == 'default_value':
                 fill_value = default_value
@@ -107,13 +106,13 @@ class MissingValueProcessor:
         """
         data = self.dataset
 
-        targetColumns = self._get_target_columns(columns)
-        lines_length = len(data[targetColumns[0]])
+        target_columns = self._get_target_columns(columns)
+        lines_length = len(data[target_columns[0]])
 
         idx_to_delete = []
         
         for idx_line in range(lines_length):
-            if any(data[col][idx_line] is None for col in targetColumns):
+            if any(data[col][idx_line] is None for col in target_columns):
                 idx_to_delete.append(idx_line)
         
         reversed_idx_del_list = sorted(idx_to_delete, reverse=True)
@@ -140,9 +139,10 @@ class Scaler:
         Args:
             columns (Set[str]): Colunas para aplicar o scaler. Se vazio, tenta aplicar a todas.
         """
-        targetColumns = self._get_target_columns(columns)
+        target_columns = self._get_target_columns(columns)
 
-        for col in targetColumns:
+        for col in target_columns:
+            self.stats._validate_numeric_column(col)
             data = self.dataset[col]
  
             valid_values = [x for x in data if x is not None]
@@ -163,8 +163,9 @@ class Scaler:
         Args:
             columns (Set[str]): Colunas para aplicar o scaler. Se vazio, tenta aplicar a todas.
         """
-        targetColumns = self._get_target_columns(columns)
-        for col in targetColumns:
+        target_columns = self._get_target_columns(columns)
+        for col in target_columns:
+            self.stats._validate_numeric_column(col)
             data = self.dataset[col]
             
             if data: 
@@ -193,10 +194,11 @@ class Encoder:
         """
 
         for col in columns:
-            unique_categories_sorted = sorted(list(set(self.dataset[col])))
+            values = [v if v is not None else '__MISSING__' for v in self.dataset[col]]
+            unique_categories_sorted = sorted(set(values))
 
             list_map = {item: i for i, item in enumerate(unique_categories_sorted)}
-            encoded_values = [list_map[c] for c in self.dataset[col]]
+            encoded_values = [list_map[value] for value in values]
             
             self.dataset[col] = encoded_values
 
@@ -210,12 +212,12 @@ class Encoder:
             columns (Set[str]): Colunas categóricas para codificar.
         """
         for col in columns:
-            unique_categories_sorted = list(dict.fromkeys(self.dataset[col]))
-            unique_categories_sorted.sort()
+            values = [v if v is not None else '__MISSING__' for v in self.dataset[col]]
+            unique_categories_sorted = sorted(set(values))
 
             for cat in unique_categories_sorted:
                 new_col = f"{col}_{cat}"
-                self.dataset[new_col] = [1 if value == cat else 0 for value in self.dataset[col]]
+                self.dataset[new_col] = [1 if value == cat else 0 for value in values]
 
             del self.dataset[col]
 class Preprocessing:

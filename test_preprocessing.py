@@ -95,7 +95,6 @@ class TestEncoder(unittest.TestCase):
         self.assertEqual(encoder.dataset['cor_azul'], [1, 0, 0, 1])
         self.assertEqual(encoder.dataset['cor_verde'], [0, 1, 0, 0])
 
-
 class TestPreprocessingFacade(unittest.TestCase):
 
     def setUp(self):
@@ -155,3 +154,40 @@ class TestPreprocessingFacade(unittest.TestCase):
             
 if __name__ == '__main__':
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
+
+class TestEdgeCases(unittest.TestCase):
+    def test_minmax_with_none_and_equal_values(self):
+        data = {'num': [5, None, 5]}
+        scaler = Scaler(copy.deepcopy(data))
+        scaler.minMax_scaler(columns={'num'})
+        # valores iguais → 0.0
+        self.assertEqual(scaler.dataset['num'][0], 0.0)
+        self.assertIsNone(scaler.dataset['num'][1])
+
+    def test_standard_with_only_none(self):
+        data = {'num': [None, None]}
+        scaler = Scaler(copy.deepcopy(data))
+        # Não deve levantar erro
+        scaler.standard_scaler(columns={'num'})
+        self.assertTrue(all(x is None or isinstance(x, float) for x in scaler.dataset['num']))
+
+    def test_label_encode_with_none(self):
+        data = {'color': ['red', None, 'blue']}
+        encoder = Encoder(copy.deepcopy(data))
+        encoder.label_encode(columns={'color'})
+        self.assertTrue(all(isinstance(x, int) for x in encoder.dataset['color']))
+
+    def test_onehot_encode_with_none(self):
+        data = {'color': ['red', None, 'blue']}
+        encoder = Encoder(copy.deepcopy(data))
+        encoder.oneHot_encode(columns={'color'})
+        self.assertIn('color___MISSING__', encoder.dataset)  # coluna criada
+
+    def test_dropna_all_none_rows(self):
+        data = {'a': [None, None], 'b': [1, 2]}
+        mvp = MissingValueProcessor(copy.deepcopy(data))
+        mvp.dropna(columns={'a'})
+        self.assertEqual(len(mvp.dataset['a']), 0)
+
+if __name__ == '__main__':
+    unittest.main()
